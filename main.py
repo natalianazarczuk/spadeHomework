@@ -1,8 +1,9 @@
 import asyncio
 import time
+import random
 from spade.agent import Agent
 from spade.message import Message
-from spade.behaviour import CyclicBehaviour
+from spade.behaviour import CyclicBehaviour, PeriodicBehaviour
 from spade.template import Template
 
 
@@ -15,23 +16,20 @@ class Agent1(Agent):
         async def run(self):
             self.counter += 1
             print("[1]Counter: {}".format(self.counter))
-            msg = Message(to="nnagent2@hot-chilli.eu")     # Instantiate the message
-            msg.set_metadata("performative", "query")  # Set the "inform" FIPA performative
-            msg.body = str(self.counter)                  # Set the message content
+            msg = Message(to="nnagent2@hot-chilli.eu")
+            msg.set_metadata("performative", "query")
+            msg.body = str(self.counter)
 
             await self.send(msg)
             print("[1]Message sent!")
 
-            print("[1]Waiting to receive")
-            msg = await self.receive(timeout=20)
+            msg = await self.receive(timeout=10)
             if msg:
-                print("[1]Message received with content: {}".format(msg.body))
+                self.counter = int(msg.body)
             else:
-                print("[1]Did not received any message after 20 seconds")
+                print("[1]Did not received any message after 10 seconds")
 
-            self.counter = int(msg.body)
             await asyncio.sleep(1)
-
 
     async def setup(self):
         print("Agent 1 starting . . .")
@@ -44,20 +42,16 @@ class Agent1(Agent):
 class Agent2(Agent):
     class Behavior2(CyclicBehaviour):
         async def run(self):
-            print("[2]Waiting to receive")
-
-            msg = await self.receive(timeout=20)
+            msg = await self.receive(timeout=10)
             if msg:
-                print("[2]Message received with content: {}".format(msg.body))
+                self.counter = int(msg.body) + 1
             else:
-                print("[2]Did not received any message after 20 seconds")
-
-            self.counter = int(msg.body) + 1
+                print("[2]Did not received any message after 10 seconds")
 
             print("[2]Counter: {}".format(self.counter))
-            msg = Message(to="nnagent1@hot-chilli.eu")  # Instantiate the message
-            msg.set_metadata("performative", "query")  # Set the "inform" FIPA performative
-            msg.body = str(self.counter)  # Set the message content
+            msg = Message(to="nnagent1@hot-chilli.eu")
+            msg.set_metadata("performative", "query")
+            msg.body = str(self.counter)
 
             await self.send(msg)
             print("[2]Message sent!")
